@@ -17,6 +17,12 @@ const isConfigured = Boolean(
     !String(firebaseConfig.apiKey).startsWith("YOUR_"),
 );
 
+if (!isConfigured && typeof window !== "undefined") {
+  console.warn(
+    "[Firebase Config]: VITE_FIREBASE_API_KEY or VITE_FIREBASE_PROJECT_ID is missing. Add VITE_FIREBASE_* environment variables in Vercel project settings to enable Firebase Auth.",
+  );
+}
+
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;

@@ -98,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
             </span>
           </button>
 
-          {configured && !loading && (
+          {!loading && (
             user ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-white/5 border border-white/10">
@@ -165,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
                   {link.label}
                 </button>
               ))}
-              {configured && !loading && (
+              {!loading && (
                 user ? (
                   <button
                     onClick={() => {
