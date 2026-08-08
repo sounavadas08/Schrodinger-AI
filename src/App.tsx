@@ -6,6 +6,10 @@ import { Comparison } from "./components/Comparison";
 import { LiveStudio } from "./components/LiveStudio";
 import { Stats } from "./components/Stats";
 import { Timeline } from "./components/Timeline";
+import { VideoGenerator } from "./components/VideoGenerator";
+import { MusicWriter } from "./components/MusicWriter";
+import { WeatherPredictor } from "./components/WeatherPredictor";
+import { YouTubeToMp3 } from "./components/YouTubeToMp3";
 import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
 import { AuraChat } from "./components/AuraChat";
@@ -52,6 +56,18 @@ export default function App() {
 
         {/* Filmmaking Production Timeline */}
         <Timeline />
+
+        {/* AI Video Generator */}
+        <VideoGenerator />
+
+        {/* AI Music Writer */}
+        <MusicWriter />
+
+        {/* AI Weather Predictor */}
+        <WeatherPredictor />
+
+        {/* YouTube to MP3 Converter */}
+        <YouTubeToMp3 />
 
         {/* Frequently Asked Questions */}
         <FAQ />

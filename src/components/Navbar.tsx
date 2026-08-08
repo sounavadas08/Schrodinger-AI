@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Sparkles, Menu, X, ArrowRight } from "lucide-react";
+import { Sparkles, Menu, X, ArrowRight, LogOut, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useAuth } from "../auth/AuthContext";
 
 interface NavbarProps {
   onNavigate: (sectionId: string) => void;
@@ -10,6 +11,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading, configured, signInWithGoogle, signOutUser } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +23,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
 
   const navLinks = [
     { id: "studio", label: "Studio" },
+    { id: "video-generator", label: "Video" },
+    { id: "music-writer", label: "Music" },
+    { id: "weather-predictor", label: "Weather" },
+    { id: "youtube-mp3", label: "Converter" },
     { id: "compare", label: "Compare" },
     { id: "timeline", label: "Timeline" },
     { id: "faq", label: "FAQ" },
@@ -91,6 +97,40 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
               <Sparkles className="w-4 h-4 text-[#5eead4] group-hover:rotate-12 transition-transform" />
             </span>
           </button>
+
+          {configured && !loading && (
+            user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-white/5 border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-[#5eead4]/20 border border-[#5eead4]/40 text-[#5eead4] flex items-center justify-center text-[10px] font-semibold uppercase overflow-hidden">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      (user.displayName || user.email || "U").charAt(0)
+                    )}
+                  </div>
+                  <span className="text-xs text-white/80 max-w-[140px] truncate hidden lg:block">
+                    {user.displayName || user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={signOutUser}
+                  aria-label="Sign out"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-white flex items-center justify-center transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={signInWithGoogle}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-[#0A0A0F] font-semibold text-sm hover:bg-white/90 transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign in with Google</span>
+              </button>
+            )
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -125,6 +165,32 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
                   {link.label}
                 </button>
               ))}
+              {configured && !loading && (
+                user ? (
+                  <button
+                    onClick={() => {
+                      signOutUser();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full py-3 px-4 rounded-full bg-white/5 border border-white/10 text-white font-medium flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign out</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      signInWithGoogle();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full py-3 px-4 rounded-full bg-white text-[#0A0A0F] font-semibold flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign in with Google</span>
+                  </button>
+                )
+              )}
+
               <div className="pt-2">
                 <button
                   onClick={() => {

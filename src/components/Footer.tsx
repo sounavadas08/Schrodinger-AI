@@ -29,6 +29,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <button onClick={() => onNavigate("studio")} className="hover:text-white transition-colors">Studio</button>
             </li>
             <li>
+              <button onClick={() => onNavigate("video-generator")} className="hover:text-white transition-colors">Video Generator</button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate("music-writer")} className="hover:text-white transition-colors">Music Writer</button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate("weather-predictor")} className="hover:text-white transition-colors">Weather Predictor</button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate("youtube-mp3")} className="hover:text-white transition-colors">YouTube Converter</button>
+            </li>
+            <li>
               <button onClick={() => onNavigate("compare")} className="hover:text-white transition-colors">Compare</button>
             </li>
             <li>

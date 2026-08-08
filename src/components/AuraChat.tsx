@@ -1,28 +1,108 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { MessageSquare, ChevronDown, Send, Sparkles, X, RefreshCw, Bot, User } from "lucide-react";
+import { MessageSquare, ChevronDown, Send, Sparkles, X, RefreshCw, Bot, User, History } from "lucide-react";
 import { ChatMessage } from "../types";
+import { useAuth } from "../auth/AuthContext";
+import { db } from "../firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  serverTimestamp,
+} from "firebase/firestore";
+
+const WELCOME_ID = "welcome-aura";
+
+const WELCOME: ChatMessage = {
+  id: WELCOME_ID,
+  role: "assistant",
+  content:
+    "Hello! I'm Aura, your AI filmmaking co-pilot. Ask me anything about character arcs, scene blocking, shot lists, or exporting screenplays.",
+  timestamp: "Just now",
+};
 
 export const AuraChat: React.FC = () => {
+  const { user, configured } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome-1",
-      role: "assistant",
-      content: "Hello! I'm Aura, your AI filmmaking co-pilot. Ask me anything about character arcs, scene blocking, shot lists, or exporting screenplays.",
-      timestamp: "Just now",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevUserRef = useRef<typeof user>(null);
+  const flushedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isOpen]);
+
+  const saveMessage = async (msg: ChatMessage) => {
+    if (!user || !db) return;
+    try {
+      await addDoc(collection(db, "users", user.uid, "messages"), {
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("Failed to save chat message", err);
+    }
+  };
+
+  const loadHistory = async () => {
+    if (!user || !db) return;
+    try {
+      const q = query(
+        collection(db, "users", user.uid, "messages"),
+        orderBy("createdAt", "asc"),
+        limit(50),
+      );
+      const snap = await getDocs(q);
+      const loaded: ChatMessage[] = [];
+      snap.forEach((doc) => {
+        const data = doc.data() as Partial<ChatMessage>;
+        loaded.push({
+          id: doc.id,
+          role: data.role ?? "assistant",
+          content: data.content ?? "",
+          timestamp: data.timestamp ?? "",
+          createdAt: data.createdAt,
+        });
+      });
+      setMessages(loaded.length ? loaded : [WELCOME]);
+    } catch (err) {
+      console.error("Failed to load chat history", err);
+    }
+  };
+
+  useEffect(() => {
+    const prev = prevUserRef.current;
+    prevUserRef.current = user;
+
+    if (!user) {
+      setMessages([WELCOME]);
+      flushedRef.current = null;
+      return;
+    }
+
+    (async () => {
+      if (prev === null && flushedRef.current !== user.uid && db) {
+        const pending = messages.filter((m) => m.id !== WELCOME_ID);
+        for (const m of pending) {
+          await saveMessage(m);
+        }
+        flushedRef.current = user.uid;
+      }
+      await loadHistory();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSend = async (textToSend?: string) => {
     const query = textToSend || input;
@@ -40,6 +120,8 @@ export const AuraChat: React.FC = () => {
     setInput("");
     setIsLoading(true);
 
+    if (user) await saveMessage(userMsg);
+
     try {
       const res = await fetch("/api/aura-chat", {
         method: "POST",
@@ -51,31 +133,31 @@ export const AuraChat: React.FC = () => {
 
       const data = await res.json();
       if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            role: "assistant",
-            content: data.reply,
-            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          },
-        ]);
+        const assistantMsg: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: data.reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+        if (user) await saveMessage(assistantMsg);
       }
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "Sorry, I had trouble connecting to the AI Studio core. Please try again.",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
+      const errorMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, I had trouble connecting to the AI Studio core. Please try again.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+      if (user) await saveMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const showHistoryHint = configured && !user;
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -135,6 +217,13 @@ export const AuraChat: React.FC = () => {
 
             {/* Chat Messages Body */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3 font-sans text-xs sm:text-sm">
+              {showHistoryHint && (
+                <div className="flex items-center gap-2 text-[11px] text-[#9A9AA5] bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2">
+                  <History className="w-3.5 h-3.5 text-[#5eead4] flex-shrink-0" />
+                  <span>Sign in with Google to save your chat history across sessions.</span>
+                </div>
+              )}
+
               {messages.map((m) => (
                 <div
                   key={m.id}
