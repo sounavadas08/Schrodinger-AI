@@ -11,7 +11,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, loading, configured, signInWithGoogle, signOutUser } = useAuth();
+  const { user, loading, openAuthModal, signOutUser } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,11 +123,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
               </div>
             ) : (
               <button
-                onClick={signInWithGoogle}
+                onClick={openAuthModal}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-[#0A0A0F] font-semibold text-sm hover:bg-white/90 transition-colors"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Sign in with Google</span>
+                <span>Sign In</span>
               </button>
             )
           )}
@@ -180,13 +180,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
                 ) : (
                   <button
                     onClick={() => {
-                      signInWithGoogle();
+                      openAuthModal();
                       setMobileMenuOpen(false);
                     }}
                     className="w-full py-3 px-4 rounded-full bg-white text-[#0A0A0F] font-semibold flex items-center justify-center gap-2"
                   >
                     <LogIn className="w-4 h-4" />
-                    <span>Sign in with Google</span>
+                    <span>Sign In</span>
                   </button>
                 )
               )}

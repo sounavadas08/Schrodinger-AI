@@ -42,42 +42,60 @@ export const AuraChat: React.FC = () => {
   }, [messages, isOpen]);
 
   const saveMessage = async (msg: ChatMessage) => {
-    if (!user || !db) return;
+    if (!user) return;
     try {
-      await addDoc(collection(db, "users", user.uid, "messages"), {
-        role: msg.role,
-        content: msg.content,
-        timestamp: msg.timestamp,
-        createdAt: serverTimestamp(),
-      });
+      const storageKey = `aura_chat_${user.uid}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      const updated = [...existing.filter((m: ChatMessage) => m.id !== msg.id), msg];
+      localStorage.setItem(storageKey, JSON.stringify(updated.slice(-50)));
+
+      if (db) {
+        await addDoc(collection(db, "users", user.uid, "messages"), {
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          createdAt: serverTimestamp(),
+        });
+      }
     } catch (err) {
-      console.error("Failed to save chat message", err);
+      console.warn("Remote chat save note:", err);
     }
   };
 
   const loadHistory = async () => {
-    if (!user || !db) return;
+    if (!user) return;
     try {
-      const q = query(
-        collection(db, "users", user.uid, "messages"),
-        orderBy("createdAt", "asc"),
-        limit(50),
-      );
-      const snap = await getDocs(q);
-      const loaded: ChatMessage[] = [];
-      snap.forEach((doc) => {
-        const data = doc.data() as Partial<ChatMessage>;
-        loaded.push({
-          id: doc.id,
-          role: data.role ?? "assistant",
-          content: data.content ?? "",
-          timestamp: data.timestamp ?? "",
-          createdAt: data.createdAt,
+      const storageKey = `aura_chat_${user.uid}`;
+      const localSaved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+      if (localSaved.length > 0) {
+        setMessages(localSaved);
+      }
+
+      if (db) {
+        const q = query(
+          collection(db, "users", user.uid, "messages"),
+          orderBy("createdAt", "asc"),
+          limit(50),
+        );
+        const snap = await getDocs(q);
+        const loaded: ChatMessage[] = [];
+        snap.forEach((doc) => {
+          const data = doc.data() as Partial<ChatMessage>;
+          loaded.push({
+            id: doc.id,
+            role: data.role ?? "assistant",
+            content: data.content ?? "",
+            timestamp: data.timestamp ?? "",
+            createdAt: data.createdAt,
+          });
         });
-      });
-      setMessages(loaded.length ? loaded : [WELCOME]);
+        if (loaded.length) {
+          setMessages(loaded);
+          localStorage.setItem(storageKey, JSON.stringify(loaded));
+        }
+      }
     } catch (err) {
-      console.error("Failed to load chat history", err);
+      console.warn("Remote history load note", err);
     }
   };
 
