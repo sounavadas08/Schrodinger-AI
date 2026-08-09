@@ -20,6 +20,29 @@ export interface AppUser {
   photoURL?: string | null;
 }
 
+interface LocalAccount {
+  uid: string;
+  email: string;
+  passwordHash: string;
+  displayName: string;
+  createdAt: string;
+}
+
+const ACCOUNTS_KEY = "schrodinger_accounts_store";
+
+const getLocalAccounts = (): LocalAccount[] => {
+  try {
+    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalAccounts = (accs: LocalAccount[]) => {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accs));
+};
+
 interface AuthContextValue {
   user: AppUser | null;
   loading: boolean;
@@ -117,12 +140,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signInWithEmail = async (email: string, pass: string) => {
     setAuthError(null);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !pass) {
+      throw new Error("Please enter both email and password.");
+    }
+
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password: pass,
       });
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. If you don't have an account, please sign up first.");
+        }
+        throw error;
+      }
       if (data?.user) {
         saveUserLocal({
           uid: data.user.id,
@@ -134,29 +167,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     if (firebaseAuth && isFirebaseConfigured) {
-      const res = await signInWithEmailAndPassword(firebaseAuth, email, pass);
-      saveUserLocal({
-        uid: res.user.uid,
-        email: res.user.email,
-        displayName: res.user.displayName || res.user.email?.split("@")[0] || "User",
-      });
-      return;
+      try {
+        const res = await signInWithEmailAndPassword(firebaseAuth, cleanEmail, pass);
+        saveUserLocal({
+          uid: res.user.uid,
+          email: res.user.email,
+          displayName: res.user.displayName || res.user.email?.split("@")[0] || "User",
+        });
+        return;
+      } catch (err: any) {
+        if (err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+          throw new Error("No account found matching this email and password. Please sign up first or check your details.");
+        } else if (err.code === "auth/wrong-password") {
+          throw new Error("Incorrect password. Please try again.");
+        }
+        throw err;
+      }
     }
 
-    // Instant local auth fallback
-    const mockUid = "user_" + btoa(email).replace(/=/g, "");
+    // Strict local verification fallback
+    const accounts = getLocalAccounts();
+    const existing = accounts.find((a) => a.email === cleanEmail);
+
+    if (!existing) {
+      throw new Error(
+        `No account found for "${cleanEmail}". Please click "Sign Up" below to create an account first.`
+      );
+    }
+
+    if (existing.passwordHash !== btoa(pass)) {
+      throw new Error("Incorrect password. Please verify your password and try again.");
+    }
+
     saveUserLocal({
-      uid: mockUid,
-      email,
-      displayName: email.split("@")[0],
+      uid: existing.uid,
+      email: existing.email,
+      displayName: existing.displayName,
     });
   };
 
   const signUpWithEmail = async (email: string, pass: string, name?: string) => {
     setAuthError(null);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !pass) {
+      throw new Error("Please enter a valid email and password.");
+    }
+    if (pass.length < 6) {
+      throw new Error("Password must be at least 6 characters long.");
+    }
+
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password: pass,
         options: { data: { display_name: name } },
       });
@@ -165,31 +227,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         saveUserLocal({
           uid: data.user.id,
           email: data.user.email || null,
-          displayName: name || email.split("@")[0],
+          displayName: name || cleanEmail.split("@")[0],
         });
       }
       return;
     }
 
     if (firebaseAuth && isFirebaseConfigured) {
-      const res = await createUserWithEmailAndPassword(firebaseAuth, email, pass);
-      if (name && res.user) {
-        await updateProfile(res.user, { displayName: name });
+      try {
+        const res = await createUserWithEmailAndPassword(firebaseAuth, cleanEmail, pass);
+        if (name && res.user) {
+          await updateProfile(res.user, { displayName: name });
+        }
+        saveUserLocal({
+          uid: res.user.uid,
+          email: res.user.email,
+          displayName: name || res.user.email?.split("@")[0] || "User",
+        });
+        return;
+      } catch (err: any) {
+        if (err.code === "auth/email-already-in-use") {
+          throw new Error("An account with this email already exists. Please switch to Sign In.");
+        }
+        throw err;
       }
-      saveUserLocal({
-        uid: res.user.uid,
-        email: res.user.email,
-        displayName: name || res.user.email?.split("@")[0] || "User",
-      });
-      return;
     }
 
-    // Instant local auth fallback
-    const mockUid = "user_" + btoa(email).replace(/=/g, "");
+    // Strict local registration fallback
+    const accounts = getLocalAccounts();
+    const existing = accounts.find((a) => a.email === cleanEmail);
+    if (existing) {
+      throw new Error("An account with this email already exists. Please click 'Sign In' to log into your existing account.");
+    }
+
+    const newAccount: LocalAccount = {
+      uid: "usr_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+      email: cleanEmail,
+      passwordHash: btoa(pass),
+      displayName: name?.trim() || cleanEmail.split("@")[0],
+      createdAt: new Date().toISOString(),
+    };
+
+    saveLocalAccounts([...accounts, newAccount]);
+
     saveUserLocal({
-      uid: mockUid,
-      email,
-      displayName: name || email.split("@")[0],
+      uid: newAccount.uid,
+      email: newAccount.email,
+      displayName: newAccount.displayName,
     });
   };
 
