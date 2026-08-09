@@ -42,7 +42,11 @@ const getLocalAccounts = (): LocalAccount[] => {
 const saveLocalAccounts = (accs: LocalAccount[]) => {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accs));
 };
-
+// Utility to check if a Google sign‑in email is authorized (present in local accounts)
+const isUserAuthorized = (email: string): boolean => {
+  const accounts = getLocalAccounts();
+  return accounts.some((a) => a.email === email);
+};
 interface AuthContextValue {
   user: AppUser | null;
   loading: boolean;
@@ -293,8 +297,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const provider = new GoogleAuthProvider();
       try {
         await signInWithPopup(firebaseAuth, provider);
+        // After successful sign‑in, verify the user's email against authorized accounts
+        const signedInUser = firebaseAuth.currentUser;
+        const email = signedInUser?.email;
+        if (email && !isUserAuthorized(email)) {
+          // Sign out and inform the user
+          await firebaseSignOut(firebaseAuth);
+          const msg = "Google account not recognized. Please sign in with Email/Password.";
+          setAuthError(msg);
+          alert(msg);
+          return;
+        }
       } catch (err: any) {
-        console.error("[Firebase Auth Error]:", err);
+        console.error("[Firebase Auth Error]", err);
         if (err?.code === "auth/unauthorized-domain") {
           const domain = window.location.hostname;
           const msg = `Domain "${domain}" is not authorized in Firebase. Please sign in with Email or authorize "${domain}" in Firebase Console.`;
