@@ -296,29 +296,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (firebaseAuth && isFirebaseConfigured) {
       const provider = new GoogleAuthProvider();
       try {
-        await signInWithPopup(firebaseAuth, provider);
-        // After successful sign‑in, verify the user's email against authorized accounts
-        const signedInUser = firebaseAuth.currentUser;
-        const email = signedInUser?.email;
-        if (email && !isUserAuthorized(email)) {
-          // Sign out and inform the user
-          await firebaseSignOut(firebaseAuth);
-          const msg = "Google account not recognized. Please sign in with Email/Password.";
-          setAuthError(msg);
-          alert(msg);
-          return;
+        const result = await signInWithPopup(firebaseAuth, provider);
+        const u = result.user;
+        // Auto-register Google user into local accounts store so future email sign-in also works
+        const accounts = getLocalAccounts();
+        if (!accounts.some((a) => a.email === u.email)) {
+          const newAcc: LocalAccount = {
+            uid: u.uid,
+            email: u.email!,
+            passwordHash: "",
+            displayName: u.displayName || u.email?.split("@")[0] || "User",
+            createdAt: new Date().toISOString(),
+          };
+          saveLocalAccounts([...accounts, newAcc]);
         }
+        saveUserLocal({
+          uid: u.uid,
+          email: u.email,
+          displayName: u.displayName || u.email?.split("@")[0] || "User",
+          photoURL: u.photoURL,
+        });
       } catch (err: any) {
         console.error("[Firebase Auth Error]", err);
         if (err?.code === "auth/unauthorized-domain") {
           const domain = window.location.hostname;
-          const msg = `Domain "${domain}" is not authorized in Firebase. Please sign in with Email or authorize "${domain}" in Firebase Console.`;
+          const msg = `Domain "${domain}" is not authorized in Firebase. Please add it in Firebase Console → Authentication → Settings → Authorized domains.`;
           setAuthError(msg);
-          alert(msg);
         } else if (err?.code === "auth/popup-blocked" || err?.code === "auth/popup-closed-by-user") {
-          await signInWithRedirect(firebaseAuth, provider);
+          try {
+            await signInWithRedirect(firebaseAuth, provider);
+          } catch (redirectErr: any) {
+            setAuthError(redirectErr?.message || "Google sign-in failed.");
+          }
         } else {
-          throw err;
+          setAuthError(err?.message || "Google sign-in failed.");
         }
       }
       return;

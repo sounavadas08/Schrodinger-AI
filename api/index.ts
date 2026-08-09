@@ -13,14 +13,14 @@ app.use(express.json({ limit: "10mb" }));
 // Serve static MP3 downloads
 app.use('/downloads', express.static(path.resolve(process.env.VITE_MP3_DOWNLOAD_DIR || 'public/downloads')));
 
-// Initialize GoogleGenAI lazily
-function getGenAI() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+// Initialize GoogleGenAI lazily with optional custom API key
+function getGenAI(apiKey?: string) {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (!key || key === "MY_GEMINI_API_KEY") {
     return null;
   }
   return new GoogleGenAI({
-    apiKey,
+    apiKey: key,
     httpOptions: {
       headers: {
         "User-Agent": "aistudio-build",
@@ -114,7 +114,7 @@ A sweeping drone shot captures the vivid horizon as dramatic clouds move across 
   }
 });
 
-// 2. Concept Art / Image Generator Endpoint
+// 2. Concept Art / Image Generator Endpoint (Nano Banana / gemini-3.1-flash-image)
 app.post("/api/generate-image", async (req, res) => {
   try {
     const { prompt, aspectRatio = "16:9" } = req.body;
@@ -122,11 +122,13 @@ app.post("/api/generate-image", async (req, res) => {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const ai = getGenAI();
+    // Try Nano Banana dedicated key first, then fall back to main GEMINI key
+    const nanoBananaKey = process.env.VITE_NANOBANANA_API_KEY;
+    const ai = getGenAI(nanoBananaKey) || getGenAI();
     if (ai) {
       try {
         const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash-image",
+          model: "gemini-3.1-flash-image",
           contents: {
             parts: [
               {
@@ -144,12 +146,12 @@ app.post("/api/generate-image", async (req, res) => {
             if (part.inlineData) {
               const base64Data = part.inlineData.data;
               const mimeType = part.inlineData.mimeType || "image/png";
-              return res.json({ imageUrl: `data:${mimeType};base64,${base64Data}` });
+              return res.json({ imageUrl: `data:${mimeType};base64,${base64Data}`, model: "nano-banana" });
             }
           }
         }
       } catch (imgError: any) {
-        console.warn("Gemini image generation warning, using AI fallback:", imgError?.message?.slice(0, 120));
+        console.warn("Nano Banana image generation warning, using Pollinations fallback:", imgError?.message?.slice(0, 200));
       }
     }
 
@@ -213,40 +215,49 @@ app.post("/api/aura-chat", async (req, res) => {
   }
 });
 
-// 4. Video Generation Endpoint
+// 4. Video Generation Endpoint (Veo 3.1)
 app.post("/api/generate-video", async (req, res) => {
   try {
-    const { prompt, duration, aspectRatio, style } = req.body;
+    const { prompt, duration, aspectRatio = "16:9", style } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required" });
     }
 
-    const ai = getGenAI();
+    const veoKey = process.env.VITE_VEO_API_KEY;
+    const ai = getGenAI(veoKey) || getGenAI();
+
     if (ai) {
       try {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: `Generate a detailed cinematic video scene description for: "${prompt}". Style: ${style}. Duration: ${duration}. Aspect ratio: ${aspectRatio}. Provide a professional scene breakdown including shot composition, lighting, camera movement, and sound design.`,
+        // Veo 3.1 uses generate_videos (async operation)
+        const operation = await (ai as any).models.generateVideos({
+          model: "veo-3.1-generate-preview",
+          prompt: `${style ? style + " style, " : ""}cinematic, ${prompt}`,
           config: {
-            systemInstruction:
-              "You are a professional film director and cinematographer. Provide detailed video scene descriptions suitable for AI video generation.",
-            temperature: 0.8,
+            aspectRatio: aspectRatio || "16:9",
+            durationSeconds: parseInt((duration || "10s").replace(/[^0-9]/g, "")) || 10,
           },
         });
 
-        if (response && response.text) {
-          const title = prompt.slice(0, 50).trim();
-          return res.json({ 
-            videoUrl: pollinationsUrl(`${style} video scene, ${prompt}`, aspectRatio),
-            title,
-            description: response.text,
-          });
+        // Poll until done
+        let op = operation;
+        while (!op.done) {
+          await new Promise((r) => setTimeout(r, 3000));
+          op = await op.poll();
         }
-      } catch (videoErr: any) {
-        console.warn("Gemini video generation warning (using fallback):", videoErr?.message || videoErr);
+
+        const videos = op.response?.generatedVideos;
+        if (videos && videos.length > 0) {
+          const videoData = videos[0];
+          const videoUrl = videoData.video?.uri || videoData.uri;
+          const title = prompt.slice(0, 50).trim();
+          return res.json({ videoUrl, title, model: "veo-3.1" });
+        }
+      } catch (veoErr: any) {
+        console.warn("Veo 3.1 video generation warning (using fallback):", veoErr?.message?.slice(0, 200) || veoErr);
       }
     }
 
+    // Fallback: return a still image from Pollinations as a preview frame
     const title = prompt.slice(0, 50).trim() || "AI Generated Video";
     const videoUrl = pollinationsUrl(`${style} video scene, motion, ${prompt}`, aspectRatio);
     return res.json({ videoUrl, title, fallback: true });
@@ -256,7 +267,7 @@ app.post("/api/generate-video", async (req, res) => {
   }
 });
 
-// 5. Music Generation Endpoint
+// 5. Music Generation Endpoint (Lyria 3 Pro)
 app.post("/api/generate-music", async (req, res) => {
   try {
     const { genre, mood, duration, instruments, prompt } = req.body;
@@ -264,18 +275,53 @@ app.post("/api/generate-music", async (req, res) => {
       return res.status(400).json({ error: "Genre and mood are required" });
     }
 
-    const ai = getGenAI();
+    const lyriaKey = process.env.VITE_LYRIA_API_KEY;
+    const ai = getGenAI(lyriaKey) || getGenAI();
     let description = "";
     let bpm = 120;
     let key = "C Major";
     let timeSignature = "4/4";
     let title = "";
+    let audioUrl: string | undefined;
 
+    const musicPrompt = `${mood} ${genre} music, ${instruments?.join(", ") || "orchestral"} instruments, ${duration || "2:00"} duration${prompt ? `, ${prompt}` : ""}`;
+
+    // Try Lyria 3 Pro for actual audio generation
     if (ai) {
       try {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: `Compose a detailed musical piece with the following parameters:
+        const lyriaRes = await (ai as any).models.generateContent({
+          model: "lyria-3-pro-preview",
+          contents: musicPrompt,
+        });
+
+        if (lyriaRes?.candidates?.[0]?.content?.parts) {
+          for (const part of lyriaRes.candidates[0].content.parts) {
+            if (part.inlineData?.mimeType?.startsWith("audio/")) {
+              // Save audio to downloads directory
+              const downloadDir = path.resolve(process.env.VITE_MP3_DOWNLOAD_DIR || "public/downloads");
+              if (!fs.existsSync(downloadDir)) fs.mkdirSync(downloadDir, { recursive: true });
+              const safeName = `${mood}_${genre}_${Date.now()}`.replace(/[^a-z0-9_]/gi, "_");
+              const ext = part.inlineData.mimeType.split("/")[1] || "mp3";
+              const fileName = `${safeName}.${ext}`;
+              const filePath = path.join(downloadDir, fileName);
+              fs.writeFileSync(filePath, Buffer.from(part.inlineData.data, "base64"));
+              audioUrl = `/downloads/${fileName}`;
+            }
+            if (part.text) description = part.text;
+          }
+        }
+      } catch (lyriaErr: any) {
+        console.warn("Lyria 3 Pro warning (using text fallback):", lyriaErr?.message?.slice(0, 200));
+      }
+
+      // If Lyria didn't return audio, get description from Gemini text model
+      if (!description && !audioUrl) {
+        try {
+          const geminiAi = getGenAI();
+          if (geminiAi) {
+            const response = await geminiAi.models.generateContent({
+              model: "gemini-2.5-flash",
+              contents: `Compose a detailed musical piece with the following parameters:
 Genre: ${genre}
 Mood: ${mood}
 Duration: ${duration}
@@ -283,31 +329,24 @@ Instruments: ${instruments?.join(", ") || "piano, strings"}
 Additional notes: ${prompt || "None"}
 
 Provide: a catchy title, BPM, musical key, time signature, and a 2-3 sentence description of the composition including motifs, dynamic changes, and instrumentation details.`,
-          config: {
-            systemInstruction:
-              "You are an award-winning film composer and music producer. Provide professional music composition details.",
-            temperature: 0.9,
-          },
-        });
-
-        if (response && response.text) {
-          description = response.text;
+              config: {
+                systemInstruction:
+                  "You are an award-winning film composer and music producer. Provide professional music composition details.",
+                temperature: 0.9,
+              },
+            });
+            if (response?.text) description = response.text;
+          }
+        } catch (geminiErr: any) {
+          console.warn("Gemini music description warning:", geminiErr?.message || geminiErr);
         }
-      } catch (musicErr: any) {
-        console.warn("Gemini music generation warning (using fallback):", musicErr?.message || musicErr);
       }
     }
 
     if (!description) {
       const moodBpmMap: Record<string, number> = {
-        Epic: 140,
-        Melancholic: 72,
-        Energetic: 160,
-        Calm: 90,
-        Dark: 100,
-        Uplifting: 130,
-        Tense: 150,
-        Romantic: 85,
+        Epic: 140, Melancholic: 72, Energetic: 160, Calm: 90,
+        Dark: 100, Uplifting: 130, Tense: 150, Romantic: 85,
       };
       bpm = moodBpmMap[mood] || 120;
       title = `${mood} ${genre} Composition`;
@@ -325,6 +364,7 @@ Provide: a catchy title, BPM, musical key, time signature, and a 2-3 sentence de
         duration,
         instruments: instruments || ["Piano", "Strings"],
         description,
+        ...(audioUrl ? { audioUrl } : {}),
       },
     });
   } catch (error: any) {
@@ -373,18 +413,42 @@ app.post("/api/convert-youtube", async (req, res) => {
     }
 
     const ytdlp = new YtDlp();
+
+    // Fetch video metadata first
     const info = await ytdlp.getInfoAsync<"video">(url);
-    
-    const title = info.title || "YouTube Audio";
+    const title = (info.title || "YouTube Audio").replace(/[^a-z0-9_\-\s]/gi, "").trim().replace(/\s+/g, "_");
     const duration = info.duration || 0;
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
     const durationFormatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
+    // Ensure download directory exists
+    const downloadDir = path.resolve(process.env.VITE_MP3_DOWNLOAD_DIR || "public/downloads");
+    if (!fs.existsSync(downloadDir)) {
+      fs.mkdirSync(downloadDir, { recursive: true });
+    }
+
+    const fileName = `${title}_${Date.now()}.mp3`;
+    const outputPath = path.join(downloadDir, fileName);
+
+    // Map bitrate string to numeric value (e.g. "320kbps" -> "320")
+    const bitrateNum = (bitrate || "192kbps").replace(/[^0-9]/g, "") || "192";
+
+    // Download audio as MP3
+    await ytdlp.downloadAsync(url, {
+      output: outputPath,
+      extractAudio: true,
+      audioFormat: "mp3",
+      audioQuality: bitrateNum,
+    });
+
+    // Build public download URL
+    const downloadUrl = `/downloads/${fileName}`;
+
     res.json({
-      title,
+      title: info.title || "YouTube Audio",
       duration: durationFormatted,
-      downloadUrl: url,
+      downloadUrl,
       status: "completed",
     });
   } catch (error: any) {
