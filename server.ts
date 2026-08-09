@@ -3,7 +3,7 @@ import app from "./api/index.js";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || "3001", 10);
 
 // Vite / Static file handling for local server development
 async function startServer() {

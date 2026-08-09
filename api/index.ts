@@ -2,11 +2,16 @@ import express from "express";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
 import { YtDlp } from "ytdlp-nodejs";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
+
+// Serve static MP3 downloads
+app.use('/downloads', express.static(path.resolve(process.env.VITE_MP3_DOWNLOAD_DIR || 'public/downloads')));
 
 // Initialize GoogleGenAI lazily
 function getGenAI() {
