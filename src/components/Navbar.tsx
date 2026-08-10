@@ -55,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
         {/* Brand Logo */}
         <button
           onClick={() => handleNav("hero")}
-          className="flex items-center gap-2.5 group text-left focus:outline-none"
+          className="flex items-center gap-2 group text-left focus:outline-none min-h-[44px]"
         >
           <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 group-hover:border-[#5eead4]/50 transition-colors">
             <span className="font-sora font-bold text-lg text-white group-hover:text-[#5eead4] transition-colors">
@@ -180,7 +180,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, activeSection }) => 
                     handleNav(link.id);
                     setMobileMenuOpen(false);
                   }}
-                  className="block w-full text-left px-4 py-2.5 rounded-lg text-base font-medium text-[#E4E1E9] hover:bg-white/5 hover:text-[#5eead4] transition-colors"
+                  className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-[#E4E1E9] hover:bg-white/5 hover:text-[#5eead4] transition-colors min-h-[44px]"
                 >
                   {link.label}
                 </button>

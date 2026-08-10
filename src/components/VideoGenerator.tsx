@@ -153,11 +153,11 @@ export const VideoGenerator: React.FC = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || !prompt.trim()}
-              className="w-full py-4 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5eead4]/20"
-            >
+             <button
+               onClick={handleGenerate}
+               disabled={isGenerating || !prompt.trim()}
+               className="w-full py-4 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5eead4]/20 min-h-[48px]"
+             >
               {isGenerating ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />

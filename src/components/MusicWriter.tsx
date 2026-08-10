@@ -224,7 +224,7 @@ export const MusicWriter: React.FC = () => {
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating}
-                className="w-full py-4 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#5eead4]/20"
+                className="w-full py-4 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#5eead4]/20 min-h-[48px]"
               >
                 {isGenerating ? (
                   <>

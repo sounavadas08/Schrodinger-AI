@@ -60,7 +60,7 @@ function AppContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-[#E4E1E9] font-sans relative overflow-x-hidden selection:bg-[#5eead4]/30 selection:text-[#5eead4]">
+    <div className="min-h-screen bg-[#0A0A0F] text-[#E4E1E9] font-sans relative overflow-x-hidden selection:bg-[#5eead4]/30 selection:text-[#5eead4] safe-top safe-bottom">
       <CustomCursor />
       <UserDashboard />
 
@@ -68,7 +68,7 @@ function AppContent() {
       <Navbar onNavigate={scrollToSection} activeSection={activeSection} />
 
       {/* Main Page Content */}
-      <main>
+      <main className="pb-20 sm:pb-0">
         {/* Hero Banner */}
         <Hero
           onExplore={() => scrollToSection("compare")}

@@ -21,14 +21,14 @@ export const Comparison: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {/* Traditional Workflow Card */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-panel p-8 sm:p-10 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all duration-300 relative group"
+          className="glass-panel p-6 sm:p-10 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all duration-300 relative group"
         >
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
             <div>
@@ -84,7 +84,7 @@ export const Comparison: React.FC = () => {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="glass-panel p-8 sm:p-10 rounded-2xl border border-[#5eead4]/30 bg-gradient-to-b from-[#12121A] to-[#12121A]/90 hover:border-[#5eead4]/60 transition-all duration-300 relative shadow-2xl shadow-[#5eead4]/10 group"
+          className="glass-panel p-6 sm:p-10 rounded-2xl border border-[#5eead4]/30 bg-gradient-to-b from-[#12121A] to-[#12121A]/90 hover:border-[#5eead4]/60 transition-all duration-300 relative shadow-2xl shadow-[#5eead4]/10 group"
         >
           {/* Subtle top glow bar */}
           <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-[#5eead4] to-[#c084fc]" />

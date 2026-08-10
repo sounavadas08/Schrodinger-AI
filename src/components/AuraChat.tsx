@@ -210,7 +210,7 @@ export const AuraChat: React.FC = () => {
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 40, opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-[360px] sm:w-[400px] h-[500px] bg-[#0E0E13] border border-white/15 rounded-2xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-xl"
+            className="w-[calc(100vw-2rem)] sm:w-[400px] h-[70vh] sm:h-[500px] bg-[#0E0E13] border border-white/15 rounded-2xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
             <div className="p-4 bg-[#131318] border-b border-white/10 flex items-center justify-between">

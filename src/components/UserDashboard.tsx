@@ -150,7 +150,7 @@ export const UserDashboard: React.FC = () => {
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -164,7 +164,7 @@ export const UserDashboard: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.95 }}
               transition={{ duration: 0.4, ease: "power3.out" }}
-              className="relative w-full max-w-lg bg-[#0E0E13]/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-lg bg-[#0E0E13]/90 backdrop-blur-2xl border border-white/10 sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] overflow-y-auto"
             >
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#5eead4] via-[#c084fc] to-[#5eead4]" />
 

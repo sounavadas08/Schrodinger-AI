@@ -7,7 +7,7 @@ interface FooterProps {
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <footer className="bg-[#08080C] border-t border-white/10 pt-16 pb-24 text-sm text-[#9A9AA5] relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
         {/* Brand Column */}
         <div className="md:col-span-2 space-y-4">
           <div className="flex items-center gap-2">
@@ -21,37 +21,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Navigation Links */}
         <div>
           <h5 className="font-mono text-xs uppercase tracking-wider text-white font-semibold mb-4">PLATFORM</h5>
-          <ul className="space-y-2.5 text-xs font-mono">
-            <li>
-              <button onClick={() => onNavigate("studio")} className="hover:text-white transition-colors">Studio</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("concept-art")} className="hover:text-white transition-colors">Concept Art</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("video-generator")} className="hover:text-white transition-colors">Video Generator</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("music-writer")} className="hover:text-white transition-colors">Music Writer</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("weather-predictor")} className="hover:text-white transition-colors">Weather Predictor</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("youtube-mp3")} className="hover:text-white transition-colors">YouTube Converter</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("compare")} className="hover:text-white transition-colors">Compare</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("timeline")} className="hover:text-white transition-colors">Timeline</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("faq")} className="hover:text-white transition-colors">FAQ</button>
-            </li>
+          <ul className="space-y-2 sm:space-y-2.5 text-xs font-mono">
+            {["studio", "video-generator", "music-writer", "weather-predictor", "youtube-mp3", "compare", "timeline", "faq"].map((id) => (
+              <li key={id}>
+                <button onClick={() => onNavigate(id)} className="hover:text-white transition-colors py-1 min-h-[32px]">
+                  {id === "studio" && "Studio"}
+                  {id === "video-generator" && "Video Generator"}
+                  {id === "music-writer" && "Music Writer"}
+                  {id === "weather-predictor" && "Weather Predictor"}
+                  {id === "youtube-mp3" && "YouTube Converter"}
+                  {id === "compare" && "Compare"}
+                  {id === "timeline" && "Timeline"}
+                  {id === "faq" && "FAQ"}
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
 

@@ -100,12 +100,12 @@ export const ToolShowcase: React.FC<{ onNavigate: (id: string) => void }> = ({ o
         </div>
       </div>
 
-      <div ref={containerRef} className="horizontal-scroll-container flex gap-6 overflow-x-auto pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div ref={containerRef} className="horizontal-scroll-container flex gap-4 sm:gap-6 overflow-x-auto pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto snap-x snap-mandatory">
         {tools.map((tool) => (
           <motion.button
             key={tool.id}
             onClick={() => onNavigate(tool.section)}
-            className="tool-card horizontal-scroll-item w-[300px] sm:w-[340px] liquid-glass-card liquid-glass-hover p-6 text-left group"
+            className="tool-card horizontal-scroll-item w-[280px] sm:w-[340px] liquid-glass-card liquid-glass-hover p-5 sm:p-6 text-left group snap-start"
           >
             <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${tool.color} p-[1px] mb-5`}>
               <div className="w-full h-full rounded-2xl bg-[#0A0A0F] flex items-center justify-center">

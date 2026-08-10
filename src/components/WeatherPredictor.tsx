@@ -156,7 +156,7 @@ export const WeatherPredictor: React.FC = () => {
           <button
             onClick={fetchWeather}
             disabled={isLoading || !location.trim()}
-            className="px-6 py-3 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#5eead4]/20"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base flex items-center justify-center gap-2 hover:bg-[#b5fff0] transition-all duration-300 disabled:opacity-50 shadow-lg shadow-[#5eead4]/20 min-h-[48px]"
           >
             {isLoading ? (
               <>

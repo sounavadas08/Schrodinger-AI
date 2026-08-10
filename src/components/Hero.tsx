@@ -60,7 +60,7 @@ export const Hero: React.FC<HeroProps> = ({ onExplore, onTryStudio }) => {
         </div>
 
         {/* Main Display Headline */}
-        <h1 className="hero-title text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-sora font-semibold tracking-tight text-white leading-[1.08] mb-6">
+        <h1 className="hero-title text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-sora font-semibold tracking-tight text-white leading-[1.08] mb-6">
           schrodinger Ai is the Future of{" "}
           <span className="block sm:inline text-gradient-purple-magenta relative">
             Entertainment
@@ -69,16 +69,16 @@ export const Hero: React.FC<HeroProps> = ({ onExplore, onTryStudio }) => {
         </h1>
 
         {/* Subtitle */}
-        <p className="hero-subtitle max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-[#9A9AA5] font-normal leading-relaxed mb-10">
+        <p className="hero-subtitle max-w-2xl mx-auto text-sm sm:text-base md:text-lg lg:text-xl text-[#9A9AA5] font-normal leading-relaxed mb-8 sm:mb-10">
           Accelerating filmmakers and storytellers by seamlessly blending artificial
           intelligence precision with human creative intuition.
         </p>
 
         {/* CTA Buttons */}
-        <div className="hero-buttons flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="hero-buttons flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <button
             onClick={onExplore}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base hover:bg-[#b5fff0] transition-all duration-300 shadow-lg shadow-[#5eead4]/20 hover:scale-105 flex items-center justify-center gap-2 group"
+            className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-[#5eead4] text-[#003730] font-semibold text-base hover:bg-[#b5fff0] transition-all duration-300 shadow-lg shadow-[#5eead4]/20 hover:scale-105 flex items-center justify-center gap-2 group min-h-[48px]"
           >
             <span>Explore AI</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -86,7 +86,7 @@ export const Hero: React.FC<HeroProps> = ({ onExplore, onTryStudio }) => {
 
           <button
             onClick={onTryStudio}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white/[0.05] border border-white/15 text-white font-medium text-base hover:bg-white/10 hover:border-white/30 transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 group"
+            className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white/[0.05] border border-white/15 text-white font-medium text-base hover:bg-white/10 hover:border-white/30 transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 group min-h-[48px]"
           >
             <Sparkles className="w-4 h-4 text-[#5eead4]" />
             <span>Try AI Studio</span>

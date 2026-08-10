@@ -124,30 +124,30 @@ export const LiveStudio: React.FC = () => {
       </div>
 
       {/* Studio Navigation Tabs */}
-      <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-2">
-        <div className="inline-flex p-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md">
+      <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="inline-flex p-1.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md flex-shrink-0">
           <button
             onClick={() => setActiveTab("script")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm font-medium transition-all min-h-[44px] ${
               activeTab === "script"
                 ? "bg-[#5eead4] text-[#003730] shadow-lg shadow-[#5eead4]/20"
                 : "text-[#9A9AA5] hover:text-white"
             }`}
           >
             <Film className="w-4 h-4" />
-            <span>Script Generator</span>
+            <span className="whitespace-nowrap">Script Generator</span>
           </button>
 
           <button
             onClick={() => setActiveTab("scene")}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-sm font-medium transition-all min-h-[44px] ${
               activeTab === "scene"
                 ? "bg-[#5eead4] text-[#003730] shadow-lg shadow-[#5eead4]/20"
                 : "text-[#9A9AA5] hover:text-white"
             }`}
           >
             <Video className="w-4 h-4" />
-            <span>Scene Shot List</span>
+            <span className="whitespace-nowrap">Scene Shot List</span>
           </button>
         </div>
       </div>
