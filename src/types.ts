@@ -10,7 +10,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
-  createdAt?: unknown;
+  createdAt?: string;
 }
 
 export interface FAQItem {
@@ -81,4 +81,17 @@ export interface ConversionJob {
   status: "queued" | "processing" | "completed" | "error";
   error?: string;
   downloadUrl?: string;
+}
+
+export interface UserProfile {
+  username: string;
+  avatar: string;
+  createdAt: string;
+}
+
+export interface UsageStats {
+  totalUsageTime: number;
+  sectionsUsed: Record<string, number>;
+  lastVisit: string;
+  sessionCount: number;
 }

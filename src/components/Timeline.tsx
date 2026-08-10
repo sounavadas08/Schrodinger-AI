@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { gsap } from "gsap";
 import { FileText, Image, Film, Music, CheckCircle2, ChevronRight, Clock } from "lucide-react";
 import { TimelineStage } from "../types";
 
@@ -56,9 +57,32 @@ const STAGES: TimelineStage[] = [
 
 export const Timeline: React.FC = () => {
   const [activeStage, setActiveStage] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".timeline-stage-btn",
+        { opacity: 0, x: -20 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 75%",
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, []);
 
   return (
-    <section id="timeline" className="py-24 relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10">
+    <section id="timeline" ref={sectionRef} className="py-24 relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10">
       <div className="text-center mb-16">
         <span className="font-mono text-xs uppercase tracking-widest text-[#5eead4] px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 inline-block mb-3">
           / 03 PRODUCTION TIMELINE
@@ -79,7 +103,7 @@ export const Timeline: React.FC = () => {
             <button
               key={stage.step}
               onClick={() => setActiveStage(idx)}
-              className={`text-left p-5 rounded-xl border transition-all relative overflow-hidden group ${
+              className={`timeline-stage-btn text-left p-5 rounded-xl border transition-all relative overflow-hidden group ${
                 isActive
                   ? "bg-[#12121A] border-[#5eead4] shadow-lg shadow-[#5eead4]/10"
                   : "bg-white/[0.02] border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
@@ -103,7 +127,7 @@ export const Timeline: React.FC = () => {
       </div>
 
       {/* Active Stage Details Card */}
-      <div className="glass-panel rounded-2xl border border-white/10 p-8 sm:p-10 relative">
+      <div className="liquid-glass-card p-8 sm:p-10 relative">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeStage}

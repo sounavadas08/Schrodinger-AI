@@ -34,6 +34,18 @@ export const YouTubeToMp3: React.FC = () => {
       });
       const data = await res.json();
 
+      if (!res.ok || data.error) {
+        setJobs((prev) =>
+          prev.map((job) =>
+            job.id === jobId
+              ? { ...job, status: "error" as const, error: data.error || "Conversion failed." }
+              : job
+          )
+        );
+        return;
+      }
+
+      // Seed the job with metadata, then poll until the conversion completes.
       setJobs((prev) =>
         prev.map((job) =>
           job.id === jobId
@@ -41,13 +53,42 @@ export const YouTubeToMp3: React.FC = () => {
                 ...job,
                 title: data.title || "YouTube Audio",
                 duration: data.duration || "0:00",
-                status: data.error ? "error" : "completed",
-                error: data.error,
-                downloadUrl: data.downloadUrl,
+                status: "processing" as const,
+                jobRef: data.jobId,
               }
             : job
         )
       );
+
+      const poll = async () => {
+        try {
+          const statusRes = await fetch(`/api/convert-youtube/${data.jobId}`);
+          const status = await statusRes.json();
+          if (status.status === "completed") {
+            setJobs((prev) =>
+              prev.map((job) =>
+                job.id === jobId
+                  ? { ...job, status: "completed" as const, downloadUrl: status.downloadUrl }
+                  : job
+              )
+            );
+          } else if (status.status === "error") {
+            setJobs((prev) =>
+              prev.map((job) =>
+                job.id === jobId
+                  ? { ...job, status: "error" as const, error: status.error }
+                  : job
+              )
+            );
+          } else {
+            // Still processing — poll again shortly.
+            setTimeout(poll, 1500);
+          }
+        } catch {
+          setTimeout(poll, 2000);
+        }
+      };
+      poll();
     } catch (err) {
       console.error(err);
       setJobs((prev) =>
